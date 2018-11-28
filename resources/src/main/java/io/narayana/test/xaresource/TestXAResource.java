@@ -16,20 +16,20 @@ public class TestXAResource implements XAResource {
     }
 
     protected TestAction testAction = TestAction.NONE;
-    private TransactionCheckerSingleton checker;
+    private TestXAResourceCheckerSingleton checker;
     private int transactionTimeout;
 
-    public TestXAResource(TransactionCheckerSingleton checker) {
+    public TestXAResource(TestXAResourceCheckerSingleton checker) {
         this.checker = checker;
     }
 
-    public TestXAResource(TestAction testAction, TransactionCheckerSingleton checker) {
+    public TestXAResource(TestAction testAction, TestXAResourceCheckerSingleton checker) {
         this.checker = checker;
         this.testAction = testAction;
     }
 
     public TestXAResource(TestAction testAction) {
-        this.checker = new TransactionCheckerSingleton();
+        this.checker = new TestXAResourceCheckerSingleton();
         this.testAction = testAction;
     }
 

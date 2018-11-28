@@ -45,12 +45,14 @@
   </dependencies>
 
   <build>
+    <finalName>resources</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
         <version>${version.maven.plugin.war}</version>
         <configuration>
           <failOnMissingWebXml>false</failOnMissingWebXml>
+          <attachClasses>true</attachClasses> <!-- for being able to depend from 'tests' module on the war type -->
         </configuration>
       </plugin>
     </plugins>

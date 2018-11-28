@@ -8,20 +8,22 @@ import javax.ejb.Singleton;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 
 /**
  * Singleton class used as a log for actions done during testing.
  */
 @Singleton
 @LocalBean
-@Path("helloworld")
-public class TransactionCheckerSingleton {
+@Path("xaresource-checker")
+public class TestXAResourceCheckerSingleton {
     private int committed, prepared, rolledback;
     private int  synchronizedBegin, synchronizedBefore, synchronizedAfter,
         synchronizedAfterCommitted, synchronizedAfterRolledBack;
     private Collection<String> messages = new ArrayList<>();
 
     @GET
+    @Path("committed")
     public int getCommitted() {
         return committed;
     }
@@ -31,6 +33,7 @@ public class TransactionCheckerSingleton {
     }
 
     @GET
+    @Path("prepared")
     public int getPrepared() {
         return prepared;
     }
@@ -40,6 +43,7 @@ public class TransactionCheckerSingleton {
     }
 
     @GET
+    @Path("rolledback")
     public int getRolledback() {
         return rolledback;
     }
@@ -48,7 +52,6 @@ public class TransactionCheckerSingleton {
         rolledback++;
     }
 
-    @GET
     public boolean isSynchronizedBefore() {
         return synchronizedBefore > 0;
     }
@@ -57,7 +60,6 @@ public class TransactionCheckerSingleton {
         synchronizedBefore++;
     }
 
-    @GET
     public boolean isSynchronizedAfter() {
         return synchronizedAfter > 0;
     }
@@ -71,7 +73,6 @@ public class TransactionCheckerSingleton {
         }
     }
 
-    @GET
     public boolean isSynchronizedBegin() {
         return synchronizedBegin > 0;
     }
@@ -107,26 +108,31 @@ public class TransactionCheckerSingleton {
     }
 
     @GET
+    @Path("synchronizedbefore")
     public int countSynchronizedBefore() {
         return synchronizedBefore;
     }
 
     @GET
+    @Path("synchronizedafter")
     public int countSynchronizedAfter() {
         return synchronizedAfter;
     }
 
     @GET
+    @Path("synchronizedaftercommitted")
     public int countSynchronizedAfterCommitted() {
         return synchronizedAfterCommitted;
     }
 
     @GET
+    @Path("synchronizedafterrolledback")
     public int countSynchronizedAfterRolledBack() {
         return synchronizedAfterRolledBack;
     }
 
     @GET
+    @Path("synchronizedbegin")
     public int countSynchronizedBegin() {
         return synchronizedBegin;
     }
@@ -135,7 +141,8 @@ public class TransactionCheckerSingleton {
         messages.add(msg);
     }
 
-    @GET
+    @GET @Produces("application/json")
+    @Path("messages")
     public Collection<String> getMessages() {
         return messages;
     }
@@ -145,6 +152,7 @@ public class TransactionCheckerSingleton {
     }
 
     @DELETE
+    @Path("resetall")
     public void resetAll() {
         resetCommitted();
         resetPrepared();
