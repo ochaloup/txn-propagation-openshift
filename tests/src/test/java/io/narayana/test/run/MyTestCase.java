@@ -2,6 +2,8 @@ package io.narayana.test.run;
 
 import java.io.File;
 
+import org.apache.tamaya.Configuration;
+import org.apache.tamaya.ConfigurationProvider;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -29,6 +31,9 @@ public class MyTestCase {
             .addClasses(TestXAResource.class, TestXAResourceCheckerSingleton.class)
             .addAsWebInfResource(new StringAsset(DEFAULT_WEB_XML),"web.xml");
         new ZipExporterImpl(archive).exportTo(new File(archive.getName()), true);
+
+        Configuration configuration = ConfigurationProvider.getConfiguration();
+        System.out.println("franta is: " + configuration.get("franta"));
     }
 
     private void prepareDeploymentClient() {

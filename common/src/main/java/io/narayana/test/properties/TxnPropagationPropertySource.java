@@ -13,7 +13,7 @@ import org.jboss.logging.Logger;
 
 public class TxnPropagationPropertySource extends BasePropertySource {
     private static final Logger log = Logger.getLogger(TxnPropagationPropertySource.class);
-    private static final String PROPERY_FILE_PARAM_NAME = "txn-propagation.properties";
+    private static final String PROPERY_FILE_PARAM_NAME = "txn.properties";
 
     private final Map<String, PropertyValue> properties;
 
