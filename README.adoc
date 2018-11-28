@@ -1,0 +1,10 @@
+= Testing ejb propagation
+
+== How to run
+
+. Properties to configure
+|===
+| Property name  | What it does
+
+| txn-propagation.properties | defines path to a property file that properties to configure test behaviour will be loaded from
+|===
