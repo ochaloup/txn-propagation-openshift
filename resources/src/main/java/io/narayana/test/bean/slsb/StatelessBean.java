@@ -13,6 +13,8 @@ import javax.transaction.TransactionManager;
 
 import org.jboss.logging.Logger;
 
+import io.narayana.test.xaresource.TestXAResource;
+
 @Stateless
 @Remote (StatelessRemote.class)
 public class StatelessBean implements StatelessRemote {
@@ -37,7 +39,7 @@ public class StatelessBean implements StatelessRemote {
     public int call() throws RemoteException {
         try {
             log.debug("Calling 'call'");
-            manager.getTransaction().enlistResource(new MockXAResource());
+            manager.getTransaction().enlistResource(new TestXAResource());
             return manager.getStatus();
         } catch (RollbackException | SystemException e) {
             throw new RemoteException("Cannot process with transaction", e);
