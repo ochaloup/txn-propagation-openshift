@@ -11,6 +11,8 @@ import org.apache.tamaya.core.propertysource.BasePropertySource;
 import org.apache.tamaya.spi.PropertyValue;
 import org.jboss.logging.Logger;
 
+import io.narayana.test.utils.FileUtils;
+
 public class TxnPropagationPropertySource extends BasePropertySource {
     private static final Logger log = Logger.getLogger(TxnPropagationPropertySource.class);
     private static final String PROPERY_FILE_PARAM_NAME = "txn.properties";
@@ -38,16 +40,6 @@ public class TxnPropagationPropertySource extends BasePropertySource {
         return true;
     }
 
-    private String adjustFileLocation(final String fileLocation) {
-        String normalizedFileName = fileLocation.trim().replaceFirst("^~",System.getProperty("user.home"));
-        if(System.getProperty("basedir") != null) {
-            if(!normalizedFileName.startsWith("/")) {
-                normalizedFileName = System.getProperty("basedir") + "/" + normalizedFileName;
-            }
-        }
-        return normalizedFileName;
-    }
-
     private Map<String, PropertyValue> loadPropertiesFromConfigFile(String configFileParamName) {
         String propertyFileLocation = System.getProperty(configFileParamName);
         if(propertyFileLocation == null) {
@@ -55,7 +47,7 @@ public class TxnPropagationPropertySource extends BasePropertySource {
             return new HashMap<>();
         }
 
-        String propertyFileLocationAdjusted = adjustFileLocation(propertyFileLocation);
+        String propertyFileLocationAdjusted = FileUtils.adjustFileLocation(propertyFileLocation);
 
         try(FileInputStream inputStream = new FileInputStream(propertyFileLocationAdjusted)) {
             Properties props = new Properties();
