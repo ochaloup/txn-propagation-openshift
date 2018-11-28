@@ -1,0 +1,2 @@
+io.narayana.test.properties.EnvironmentPropertySourceLowercase
+io.narayana.test.properties.TxnPropagationPropertySource

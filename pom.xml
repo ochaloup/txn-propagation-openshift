@@ -12,6 +12,7 @@
 
     <version.commons.lang3>3.8.1</version.commons.lang3>
     <version.checkstyle.plugin>3.0.0</version.checkstyle.plugin>
+    <version.jboss.logging>3.3.2.Final</version.jboss.logging>
     <version.junit>4.12</version.junit>
   </properties>
 
@@ -30,6 +31,14 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jboss.logging</groupId>
+      <artifactId>jboss-logging</artifactId>
+      <version>${version.jboss.logging}</version>
+    </dependency>
+  </dependencies>
 
   <build>
     <plugins>

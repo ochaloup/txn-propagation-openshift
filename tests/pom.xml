@@ -7,18 +7,20 @@
     <artifactId>txn-propagation-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
   </parent>
-  <artifactId>txn-propagation-common</artifactId>
+  <artifactId>txn-propagation-tests</artifactId>
   <packaging>jar</packaging>
-
-  <properties>
-    <version.tamaya>0.3-incubating</version.tamaya>
-  </properties>
 
   <dependencies>
     <dependency>
-     <groupId>org.apache.tamaya</groupId>
-     <artifactId>tamaya-core</artifactId>
-     <version>${version.tamaya}</version>
+      <groupId>io.narayana.test</groupId>
+      <artifactId>txn-propagation-common</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>
