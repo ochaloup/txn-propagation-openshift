@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import io.narayana.test.bean.slsb.StatelessBean;
 import io.narayana.test.bean.slsb.StatelessRemote;
+import io.narayana.test.standalone.ApplicationServerPreparation;
 import io.narayana.test.xaresource.TestXAResource;
 import io.narayana.test.xaresource.TestXAResourceCheckerSingleton;
 
@@ -34,6 +35,9 @@ public class MyTestCase {
 
         Configuration configuration = ConfigurationProvider.getConfiguration();
         System.out.println("franta is: " + configuration.get("franta"));
+
+        ApplicationServerPreparation prep = new ApplicationServerPreparation();
+        prep.prepareWildFlyServer("myserver");
     }
 
     private void prepareDeploymentClient() {

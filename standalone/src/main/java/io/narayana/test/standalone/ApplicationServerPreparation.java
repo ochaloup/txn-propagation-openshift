@@ -3,6 +3,8 @@ package io.narayana.test.standalone;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,9 +20,26 @@ public class ApplicationServerPreparation {
             .setOriginalDistParam(jbossDist);
     }
 
-    private void prepareJBossHome(String basePath) {
-        String tmpDir = PropertiesProvider.tmpDir().nonEmpty();
-        File baseFile = FileUtils.get(basePath);
+    private void prepareJBossHome(String serverName) {
+        File jbossSource = PropertiesProvider.jbossSourceHome(serverName);
+        File jbossTarget = PropertiesProvider.standaloneJbossTargetDir(serverName);
+
+        FileUtils.createMultipleDirectories(jbossTarget)
+            .create("standalone", "configuration")
+            .create("standalone", "data")
+            .create("standalone", "tmp")
+            .create("standalone", "log")
+            .create("standalone", "content");
+            
+        // get data from source to target to prepare runtime environment
+        // jbossSource.toPath()
+        Files.createDirectories(dir, attrs)
+        mkdir -p "${JBOSS_TARGET_DIR}/standalone/configuration"
+        mkdir -p "${JBOSS_TARGET_DIR}/standalone/data"
+        mkdir -p "${JBOSS_TARGET_DIR}/standalone/tmp"
+        mkdir -p "${JBOSS_TARGET_DIR}/standalone/log"
+        mkdir -p "${JBOSS_TARGET_DIR}/standalone/content"
+        cp "$JBOSS_HOME_BASE_DIR"/standalone/configuration/*.properties "${JBOSS_TARGET_DIR}/standalone/configuration"
 
         try {
             String type = Files.probeContentType(baseFile.toPath());

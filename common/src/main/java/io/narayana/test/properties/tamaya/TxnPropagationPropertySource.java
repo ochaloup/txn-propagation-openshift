@@ -1,5 +1,6 @@
-package io.narayana.test.properties;
+package io.narayana.test.properties.tamaya;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -47,7 +48,7 @@ public class TxnPropagationPropertySource extends BasePropertySource {
             return new HashMap<>();
         }
 
-        String propertyFileLocationAdjusted = FileUtils.adjustFileLocation(propertyFileLocation);
+        File propertyFileLocationAdjusted = FileUtils.get(propertyFileLocation);
 
         try(FileInputStream inputStream = new FileInputStream(propertyFileLocationAdjusted)) {
             Properties props = new Properties();

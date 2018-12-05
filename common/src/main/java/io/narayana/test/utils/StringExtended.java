@@ -11,11 +11,23 @@ public final class StringExtended {
         else this.content = strBuilder.toString();
     }
 
+    /**
+     * Returns content of the loaded string.
+     *
+     * @return string
+     */
     public String get() {
         return content;
     }
 
-    public String nonEmpty() {
+    /**
+     * Returns content of the loaded string if not empty {@link StringUtils#isNonEmpty(String)}.
+     * Otherwise {@link IllegalStateException} is thrown.
+     *
+     * @return string
+     * @throws IllegalStateException
+     */
+    public String getNonEmpty() {
         if(StringUtils.isEmpty(get())) {
             throw new IllegalStateException("String can't be empty");
         }

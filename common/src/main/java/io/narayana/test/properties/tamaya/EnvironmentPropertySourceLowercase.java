@@ -1,4 +1,4 @@
-package io.narayana.test.properties;
+package io.narayana.test.properties.tamaya;
 
 import java.util.HashMap;
 import java.util.Map;

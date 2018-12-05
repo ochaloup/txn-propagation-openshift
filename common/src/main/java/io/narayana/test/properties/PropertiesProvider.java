@@ -1,8 +1,11 @@
 package io.narayana.test.properties;
 
+import java.io.File;
+
 import org.apache.tamaya.Configuration;
 import org.apache.tamaya.ConfigurationProvider;
 
+import io.narayana.test.utils.FileUtils;
 import io.narayana.test.utils.StringExtended;
 import io.narayana.test.utils.StringUtils;
 
@@ -19,25 +22,90 @@ import io.narayana.test.utils.StringUtils;
 public final class PropertiesProvider {
     private static final Configuration cfg = ConfigurationProvider.getConfiguration();
 
+    // temporary directory
     private static final String TMP_DIR_PARAM = "java.io.tmpdir";
+    // source directory of jboss/wfly distribution
     private static final String JBOSS_HOME_PARAM = "jboss.home";
     private static final String JBOSS_DIST_PARAM = "jboss.dist";
 
-    public static final StringExtended tmpDir() {
-        return new StringExtended(cfg.get(TMP_DIR_PARAM));
+    // STANDALONE
+    // directory where jboss will "copied" and started from
+    private static final String JBOSS_TARGET_PATH = "standalone.jboss.target.path";
+
+    /**
+     * Temporary dir where data can be loaded to which is defined by property {@value #TMP_DIR_PARAM}.
+     */
+    public static final File tmpDir() {
+        StringExtended tmpDirString = new StringExtended(cfg.get(TMP_DIR_PARAM));
+        return FileUtils.getDirectory(tmpDirString);
     }
 
-    public static final StringExtended jbossDist() {
-        return takeFirstDefined(JBOSS_DIST_PARAM, JBOSS_HOME_PARAM);
+    /**
+     * <p>
+     * What was defined as place where jboss distribution could be found.
+     * This is defined by properties {@value #JBOSS_DIST_PARAM} and then {@value #JBOSS_HOME_PARAM}
+     * while the the suffix can be defined as priority place to take the value from.
+     * <p>
+     * For example, if defined {@code -Djboss.home.eap1} then {@code suffix}
+     * is defined as {@code eap1} and the properties will be search in order.
+     * <code>
+     * jboss.dist.eap1 -> jboss.home.eap1 -> jboss.dist -> jboss.home
+     * </code>
+     */
+    public static final File jbossSourceHome(String suffix) {
+        return getDirectory(suffix, JBOSS_DIST_PARAM, JBOSS_HOME_PARAM);
+    }
+
+    /**
+     * Directory where jboss data will be loaded to and where the jboss will be started from,
+     * defined by property {@value #JBOSS_TARGET_PATH}.
+     */
+    public static final File standaloneJbossTargetDir(String suffix) {
+        return getOrCreateDirectory(suffix, JBOSS_TARGET_PATH);
+    }
+
+    private static StringExtended takeFirstDefinedSuffixed(String suffix, String... items) {
+        if(StringUtils.isEmpty(suffix)) takeFirstDefined(items);
+
+        String[] itemsPrefixed = new String[items.length * 2];
+        int index = 0;
+        for(String item: items) {
+            itemsPrefixed[index++] = item + "." + suffix;
+        }
+        for(String item: items) {
+            itemsPrefixed[index++] = item;
+        }
+        return takeFirstDefined(itemsPrefixed);
     }
 
     private static StringExtended takeFirstDefined(String... items) {
+        if(items == null) throw new NullPointerException("items");
         for(String item: items) {
             if(StringUtils.isNonEmpty(cfg.get(item))) {
                 return new StringExtended(cfg.get(item));
             }
         }
         return new StringExtended((String) null);
+    }
+
+    private static File getDirectory(String suffix, String... paramName) {
+        if(paramName == null) throw new NullPointerException("paramName");
+        try {
+            StringExtended tmpDirString = takeFirstDefinedSuffixed(suffix, paramName);
+            return FileUtils.getDirectory(tmpDirString);
+        } catch (IllegalStateException ise) {
+            throw new IllegalStateException("No existing directory for property '" + paramName + "'", ise);
+        }
+    }
+
+    private static File getOrCreateDirectory(String suffix, String... paramName) {
+        if(paramName == null) throw new NullPointerException("paramName");
+        try {
+            StringExtended tmpDirString = takeFirstDefinedSuffixed(suffix, paramName);
+            return FileUtils.getOrCreateDirectory(tmpDirString);
+        } catch (IllegalStateException ise) {
+            throw new IllegalStateException("Error to gain directory for property '" + paramName + "'", ise);
+        }
     }
 }
 
