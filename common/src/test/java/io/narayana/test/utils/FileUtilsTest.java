@@ -2,6 +2,7 @@ package io.narayana.test.utils;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static io.narayana.test.utils.FileUtils.toFile;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -31,10 +32,10 @@ public class FileUtilsTest {
 
         FileUtils.delete(base);
 
-        assertFalse(toFile(base, "a").isDirectory(), "expecting 'base/a' being the directory");
-        assertFalse(toFile(base, "b", "c").isDirectory(), "expecting 'base/b/c' being the directory");
-        assertFalse(toFile(base, "a", "b", "c").isDirectory(), "expecting 'base/b/c' being the directory");
-        assertFalse(base.isDirectory(), "expecting 'base/b/c' being the directory");
+        assertFalse(toFile(base, "a").isDirectory(), "expecting 'base/a' being removed");
+        assertFalse(toFile(base, "b", "c").isDirectory(), "expecting 'base/b/c' being removed");
+        assertFalse(toFile(base, "a", "b", "c").isDirectory(), "expecting 'base/b/c' being removed");
+        assertFalse(base.isDirectory(), "expecting 'base/b/c' being removed");
     }
 
     @Test
@@ -51,16 +52,18 @@ public class FileUtilsTest {
 
         FileUtils.copy(source, target);
 
-        assertTrue(toFile(target, "a").isDirectory(), "expecting 'a' being the directory");
-        assertTrue(toFile(target, "b", "c").isDirectory(), "expecting 'b/c' being the directory");
-        assertTrue(toFile(target, "a", "b", "c").isDirectory(), "expecting 'a/b/c' being the directory");
-        assertTrue(toFile(target, "b", "test.txt").isFile(), "expecting 'b/test.txt' being the directory");
-        assertTrue(toFile(target, "a", "b", "c", "test.txt").isFile(), "expecting 'a/b/c/test.txt' being the directory");
-    }
+        assertTrue(toFile(target, "a").isDirectory(), "expecting 'a' being copied as the directory");
+        assertTrue(toFile(target, "b", "c").isDirectory(), "expecting 'b/c' being copied as the directory");
+        assertTrue(toFile(target, "a", "b", "c").isDirectory(), "expecting 'a/b/c' being copied as the directory");
+        assertTrue(toFile(target, "b", "test.txt").isFile(), "expecting 'b/test.txt' being copied as the directory");
+        assertTrue(toFile(target, "a", "b", "c", "test.txt").isFile(), "expecting 'a/b/c/test.txt' being copied as the file");
 
-    private File toFile(File base, String... paths) {
-        if(paths == null) return base;
-        return new File(base, String.join(File.separator, paths));
+        createFile(source, "b", "c", "test.txt");
+        createFile(source, "b", "c", "test.log");
+
+        FileUtils.copy(toFile(source, "b", "c"), toFile(target, "b", "c"), ".*\\.log");
+        assertFalse(toFile(target, "b", "c", "test.txt").isFile(), "expecting 'b/c/test.txt' was not copied");
+        assertTrue(toFile(target, "b", "c", "test.log").isFile(), "expecting 'b/c/test.log' was copied");
     }
 
     private File createFile(File baseFileOrDir, String... subpaths) {

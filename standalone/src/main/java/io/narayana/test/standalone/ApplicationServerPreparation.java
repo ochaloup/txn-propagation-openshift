@@ -3,8 +3,6 @@ package io.narayana.test.standalone;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,28 +22,33 @@ public class ApplicationServerPreparation {
         File jbossSource = PropertiesProvider.jbossSourceHome(serverName);
         File jbossTarget = PropertiesProvider.standaloneJbossTargetDir(serverName);
 
+        // clean target directory for passing data in
+        FileUtils.delete(jbossSource);
+        // check if the source is zip then we need to unzip first
+        try {
+            String type = Files.probeContentType(jbossSource.toPath());
+            if(type.contains("zip")) {
+                File unzipLocation = new File(PropertiesProvider.tmpDir(), serverName);
+                FileUtils.delete(unzipLocation);
+                FileUtils.unzip(jbossSource, unzipLocation);
+                jbossSource = unzipLocation;
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot find out content type of base jboss location at '" + jbossSource + "'");
+        }
+
         FileUtils.createMultipleDirectories(jbossTarget)
             .create("standalone", "configuration")
             .create("standalone", "data")
             .create("standalone", "tmp")
             .create("standalone", "log")
             .create("standalone", "content");
-            
-        // get data from source to target to prepare runtime environment
-        // jbossSource.toPath()
-        Files.createDirectories(dir, attrs)
-        mkdir -p "${JBOSS_TARGET_DIR}/standalone/configuration"
-        mkdir -p "${JBOSS_TARGET_DIR}/standalone/data"
-        mkdir -p "${JBOSS_TARGET_DIR}/standalone/tmp"
-        mkdir -p "${JBOSS_TARGET_DIR}/standalone/log"
-        mkdir -p "${JBOSS_TARGET_DIR}/standalone/content"
-        cp "$JBOSS_HOME_BASE_DIR"/standalone/configuration/*.properties "${JBOSS_TARGET_DIR}/standalone/configuration"
 
-        try {
-            String type = Files.probeContentType(baseFile.toPath());
-            System.out.println(">>>>>>>>>>>>>>>>>>>>>>> " + type);
-        } catch (IOException e) {
-            throw new IllegalStateException("Cannot find out content type of base jboss location at '" + baseFile.getPath() + "'");
-        }
+        FileUtils.copy(
+            FileUtils.toFile(jbossSource, "standalone", "configuration"),
+            FileUtils.toFile(jbossTarget, "standalone", "configuration"), ".*\\.properties");
+
+// echo "-c standalone-xts.xml -Djboss.socket.binding.port-offset=$PORT_OFFSET -Djboss.server.data.dir=${JBOSS_CONF_DIR}/standalone/data -Djboss.server.log.dir=${JBOSS_CONF_DIR}/standalone/log -Djboss.server.temp.dir=${JBOSS_CONF_DIR}/standalone/tmp -Djboss.server.deploy.dir=${JBOSS_CONF_DIR}/standalone/content -Djboss.server.config.dir=${JBOSS_CONF_DIR}/standalone/configuration"
+
     }
 }
