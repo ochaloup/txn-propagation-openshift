@@ -1,26 +1,21 @@
-package io.narayana.test.run;
+package io.narayana.test;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.apache.tamaya.Configuration;
-import org.apache.tamaya.ConfigurationProvider;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.impl.base.exporter.zip.ZipExporterImpl;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.narayana.test.bean.slsb.StatelessBean;
 import io.narayana.test.bean.slsb.StatelessRemote;
 import io.narayana.test.properties.PropertiesProvider;
-import io.narayana.test.standalone.ApplicationServerMetadata;
 import io.narayana.test.standalone.ApplicationServerPreparation;
 import io.narayana.test.xaresource.TestXAResource;
 import io.narayana.test.xaresource.TestXAResourceCheckerSingleton;
 
-public class MyTestCase {
+public class StandardTest {
     private static final String DEFAULT_WEB_XML =
         "<web-app>\n" +
         "   <servlet-mapping>\n" +
@@ -29,27 +24,21 @@ public class MyTestCase {
         "   </servlet-mapping>\n" +
         "</web-app>";
 
-    private Map<String, ApplicationServerMetadata> servers = new HashMap<>();
-
     @Test
-    public void test() {
+    public void runningJboss() {
         WebArchive archive = ShrinkWrap.create(WebArchive.class, "mytest.war")
             .addClasses(StatelessBean.class, StatelessRemote.class)
             .addClasses(TestXAResource.class, TestXAResourceCheckerSingleton.class)
             .addAsWebInfResource(new StringAsset(DEFAULT_WEB_XML),"web.xml");
         new ZipExporterImpl(archive).exportTo(new File(archive.getName()), true);
 
-        Configuration configuration = ConfigurationProvider.getConfiguration();
-        System.out.println("franta is: " + configuration.get("franta"));
+        PropertiesProvider properties = new PropertiesProvider(PropertiesProvider.DEFAULT);
 
-        File jbossSource = PropertiesProvider.jbossSourceHome(serverName);
-        File jbossTarget = PropertiesProvider.standaloneJbossTargetDir(serverName);
-
-        ApplicationServerPreparation prep = new ApplicationServerPreparation();
-        prep.prepareWildFlyServer("myserver");
-    }
-
-    private void prepareDeploymentClient() {
-        return;
+        final String eap1 = "eap1";
+        File jbossSource = properties.jbossSourceHome(eap1);
+        File jbossTarget = properties.standaloneJbossTargetDir(eap1);
+        ApplicationServerPreparation appServer1 = new ApplicationServerPreparation(eap1, properties);
+        appServer1.prepareWildFlyServer(jbossSource, jbossTarget, "standalone.xml", 0);
+        appServer1.runJBoss();
     }
 }

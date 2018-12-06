@@ -1,6 +1,7 @@
 package io.narayana.test.properties;
 
 import java.io.File;
+import java.util.Arrays;
 
 import org.apache.tamaya.Configuration;
 import org.apache.tamaya.ConfigurationProvider;
@@ -99,7 +100,7 @@ public final class PropertiesProvider {
             StringExtended tmpDirString = takeFirstDefinedSuffixed(suffix, paramName);
             return FileUtils.getDirectory(tmpDirString);
         } catch (IllegalStateException ise) {
-            throw new IllegalStateException("No existing directory for property '" + paramName + "'", ise);
+            throw new IllegalStateException("No existing directory for property '" + Arrays.asList(paramName) + "'", ise);
         }
     }
 
@@ -109,7 +110,7 @@ public final class PropertiesProvider {
             StringExtended tmpDirString = takeFirstDefinedSuffixed(suffix, paramName);
             return FileUtils.getOrCreateDirectory(tmpDirString);
         } catch (IllegalStateException ise) {
-            throw new IllegalStateException("Error to gain directory for property '" + paramName + "'", ise);
+            throw new IllegalStateException("Error to gain directory for property '" + Arrays.asList(paramName) + "'", ise);
         }
     }
 }

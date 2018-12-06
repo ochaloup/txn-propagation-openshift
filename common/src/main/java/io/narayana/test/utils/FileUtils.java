@@ -18,9 +18,6 @@ public final class FileUtils {
     private static final Logger log = Logger.getLogger(FileUtils.class);
     private FileUtils() {}
 
-    public static File get(StringExtended filePath) {
-        return get(filePath.getNonEmpty());
-    }
 
     public static File getDirectory(StringExtended filePath) {
         File potentialDir = get(filePath.getNonEmpty());
@@ -34,6 +31,10 @@ public final class FileUtils {
             throw new IllegalStateException("File '" + potentialDir + "' exists as a regural file but it's expected to be a directory");
         if(!potentialDir.exists()) potentialDir.mkdirs();
         return potentialDir;
+    }
+
+    public static File get(StringExtended filePath) {
+        return get(filePath.getNonEmpty());
     }
 
     public static File get(String filePath) {
@@ -112,7 +113,7 @@ public final class FileUtils {
         }
     }
 
-    private static String adjustFileLocation(final String fileLocation) {
+    public static String adjustFileLocation(final String fileLocation) {
         String normalizedFileName = fileLocation.trim().replaceFirst("^~",System.getProperty("user.home"));
         if(System.getProperty("basedir") != null) {
             if(!normalizedFileName.startsWith("/")) {

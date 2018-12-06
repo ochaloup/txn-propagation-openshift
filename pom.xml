@@ -86,6 +86,7 @@
   <modules>
     <module>common</module>
     <module>resources</module>
+    <module>standalone</module>
     <module>tests</module>
   </modules>
 </project>
