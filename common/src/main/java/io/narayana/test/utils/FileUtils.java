@@ -4,12 +4,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
@@ -64,94 +61,15 @@ public final class FileUtils {
         return new DirectoryCreator(baseFile);
     }
 
-    public static void delete(final File fileToDelete) {
-        if(!fileToDelete.exists()) return;
-        FileVisitor<Path> visitor = new FileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.delete(file);
-                return FileVisitResult.CONTINUE;
-            }
-            @Override
-            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                Files.delete(file);
-                return FileVisitResult.CONTINUE;
-            }
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                if (exc != null) {
-                    throw exc;
-                }
-                Files.delete(dir);
-                return FileVisitResult.CONTINUE;
-            }
-            @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                if(dir == null) throw new NullPointerException("dir");
-                if(attrs == null) throw new NullPointerException("attrs");
-                return FileVisitResult.CONTINUE;
-            }
-        };
-        try {
-            Files.walkFileTree(fileToDelete.toPath(), visitor);
-        } catch (IOException ioe) {
-            throw new IllegalStateException("Cannot delete file at '" + fileToDelete + "'", ioe);
-        }
-    }
-
-    public static void copy(final File from, final File to) {
-        copy(from, to, ".*");
-    }
-
-    public static void copy(final File from, final File to, final String regex) {
-        FileVisitor<Path> visitor = new FileVisitor<Path>() {
-            @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                if(dir == null) throw new NullPointerException("dir");
-                if(attrs == null) throw new NullPointerException("attrs");
-                // from path being /a/b, dir is /a/b/c, to path is /d then creating a directory /d/c
-                Path toPathRelativeToDir = convertFromTo(dir);
-                if(!toPathRelativeToDir.toFile().exists()) toPathRelativeToDir.toFile().mkdirs();
-                return FileVisitResult.CONTINUE;
-            }
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if(file.getFileName().toString().matches(regex)) {
-                    Path copyDestination = convertFromTo(file);
-                    Files.copy(file, copyDestination);
-                }
-                return FileVisitResult.CONTINUE;
-            }
-            @Override
-            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                Path copyDestination = convertFromTo(file);
-                Files.copy(file, copyDestination);
-                return FileVisitResult.CONTINUE;
-            }
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                if (exc != null) {
-                    throw exc;
-                }
-                return FileVisitResult.CONTINUE;
-            }
-            private Path convertFromTo(Path pathToHandle) {
-                Path relativizedPath = from.toPath().relativize(pathToHandle);
-                Path res = to.toPath().resolve(relativizedPath);
-                log.debug("path: " + pathToHandle + " ,from: " + from + ", to: " + to + ", res: " + res);
-                return res;
-            }
-        };
-        try {
-            Files.walkFileTree(from.toPath(), visitor);
-        } catch (IOException ioe) {
-            throw new IllegalStateException("Cannot copy file(s) from '" + from + "' to '" + to + "'", ioe);
-        }
-    }
-
     public static File toFile(File base, String... paths) {
+        if(base == null) throw new NullPointerException("base");
         if(paths == null) return base;
         return new File(base, String.join(File.separator, paths));
+    }
+
+    public static File toFile(String... paths) {
+        if(paths == null) throw new NullPointerException("paths");
+        return new File(String.join(File.separator, paths));
     }
 
     public static void unzip(File fileToUnzip, File targetPath) {

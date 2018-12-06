@@ -1,6 +1,8 @@
 package io.narayana.test.run;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.tamaya.Configuration;
 import org.apache.tamaya.ConfigurationProvider;
@@ -12,6 +14,8 @@ import org.junit.Test;
 
 import io.narayana.test.bean.slsb.StatelessBean;
 import io.narayana.test.bean.slsb.StatelessRemote;
+import io.narayana.test.properties.PropertiesProvider;
+import io.narayana.test.standalone.ApplicationServerMetadata;
 import io.narayana.test.standalone.ApplicationServerPreparation;
 import io.narayana.test.xaresource.TestXAResource;
 import io.narayana.test.xaresource.TestXAResourceCheckerSingleton;
@@ -25,6 +29,8 @@ public class MyTestCase {
         "   </servlet-mapping>\n" +
         "</web-app>";
 
+    private Map<String, ApplicationServerMetadata> servers = new HashMap<>();
+
     @Test
     public void test() {
         WebArchive archive = ShrinkWrap.create(WebArchive.class, "mytest.war")
@@ -35,6 +41,9 @@ public class MyTestCase {
 
         Configuration configuration = ConfigurationProvider.getConfiguration();
         System.out.println("franta is: " + configuration.get("franta"));
+
+        File jbossSource = PropertiesProvider.jbossSourceHome(serverName);
+        File jbossTarget = PropertiesProvider.standaloneJbossTargetDir(serverName);
 
         ApplicationServerPreparation prep = new ApplicationServerPreparation();
         prep.prepareWildFlyServer("myserver");

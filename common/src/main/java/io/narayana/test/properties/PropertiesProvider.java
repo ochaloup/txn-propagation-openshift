@@ -20,7 +20,8 @@ import io.narayana.test.utils.StringUtils;
     Configuration configuration = ConfigurationProvider.createConfiguration(context);
  */
 public final class PropertiesProvider {
-    private static final Configuration cfg = ConfigurationProvider.getConfiguration();
+    public static final Configuration DEFAULT = ConfigurationProvider.getConfiguration();
+    private final Configuration cfg;
 
     // temporary directory
     private static final String TMP_DIR_PARAM = "java.io.tmpdir";
@@ -32,10 +33,14 @@ public final class PropertiesProvider {
     // directory where jboss will "copied" and started from
     private static final String JBOSS_TARGET_PATH = "standalone.jboss.target.path";
 
+    public PropertiesProvider(Configuration cfg) {
+        this.cfg = cfg;
+    }
+
     /**
      * Temporary dir where data can be loaded to which is defined by property {@value #TMP_DIR_PARAM}.
      */
-    public static final File tmpDir() {
+    public final File tmpDir() {
         StringExtended tmpDirString = new StringExtended(cfg.get(TMP_DIR_PARAM));
         return FileUtils.getDirectory(tmpDirString);
     }
@@ -52,7 +57,7 @@ public final class PropertiesProvider {
      * jboss.dist.eap1 -> jboss.home.eap1 -> jboss.dist -> jboss.home
      * </code>
      */
-    public static final File jbossSourceHome(String suffix) {
+    public final File jbossSourceHome(String suffix) {
         return getDirectory(suffix, JBOSS_DIST_PARAM, JBOSS_HOME_PARAM);
     }
 
@@ -60,11 +65,11 @@ public final class PropertiesProvider {
      * Directory where jboss data will be loaded to and where the jboss will be started from,
      * defined by property {@value #JBOSS_TARGET_PATH}.
      */
-    public static final File standaloneJbossTargetDir(String suffix) {
+    public final File standaloneJbossTargetDir(String suffix) {
         return getOrCreateDirectory(suffix, JBOSS_TARGET_PATH);
     }
 
-    private static StringExtended takeFirstDefinedSuffixed(String suffix, String... items) {
+    private StringExtended takeFirstDefinedSuffixed(String suffix, String... items) {
         if(StringUtils.isEmpty(suffix)) takeFirstDefined(items);
 
         String[] itemsPrefixed = new String[items.length * 2];
@@ -78,7 +83,7 @@ public final class PropertiesProvider {
         return takeFirstDefined(itemsPrefixed);
     }
 
-    private static StringExtended takeFirstDefined(String... items) {
+    private StringExtended takeFirstDefined(String... items) {
         if(items == null) throw new NullPointerException("items");
         for(String item: items) {
             if(StringUtils.isNonEmpty(cfg.get(item))) {
@@ -88,7 +93,7 @@ public final class PropertiesProvider {
         return new StringExtended((String) null);
     }
 
-    private static File getDirectory(String suffix, String... paramName) {
+    private File getDirectory(String suffix, String... paramName) {
         if(paramName == null) throw new NullPointerException("paramName");
         try {
             StringExtended tmpDirString = takeFirstDefinedSuffixed(suffix, paramName);
@@ -98,7 +103,7 @@ public final class PropertiesProvider {
         }
     }
 
-    private static File getOrCreateDirectory(String suffix, String... paramName) {
+    private File getOrCreateDirectory(String suffix, String... paramName) {
         if(paramName == null) throw new NullPointerException("paramName");
         try {
             StringExtended tmpDirString = takeFirstDefinedSuffixed(suffix, paramName);
