@@ -29,7 +29,7 @@ public final class StringExtended {
      */
     public String getNonEmpty() {
         if(StringUtils.isEmpty(get())) {
-            throw new IllegalStateException("String can't be empty");
+            throw new IllegalStateException("Content of string can't be empty");
         }
         return content;
     }

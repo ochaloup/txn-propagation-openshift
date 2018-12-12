@@ -44,8 +44,8 @@ public class ApplicationServerPreparation {
                 jbossSource = unzipLocation;
                 appServer.setJbossOriginHome(jbossSource);
             }
-        } catch (IOException e) {
-            throw new IllegalStateException("Cannot find out content type of base jboss location at '" + jbossSource + "'", e);
+        } catch (IOException ioe) {
+            throw new IllegalStateException("Cannot find out content type of base jboss location at '" + jbossSource + "'", ioe);
         }
 
         FileUtils.createMultipleDirectories(jbossTarget)
@@ -72,13 +72,13 @@ public class ApplicationServerPreparation {
                 org.apache.commons.io.FileUtils.copyFile(configFileAbs, targetConfiguration);
                 appServer.setConfigFile(configFileAbs.getName());
             } else {
-                File configFile = FileUtils.toFile(jbossTarget, "standalone", "configuration", appServer.getConfigFile());
+                File configFile = FileUtils.toFile(jbossSource, "standalone", "configuration", appServer.getConfigFile());
                 if(!configFile.isFile()) throw new IllegalStateException("Cannot use non-existent config file '" + appServer.getConfigFile()
                     + "'" + " at '" + configFile + "'");
-                org.apache.commons.io.FileUtils.copyFile(configFile, targetConfiguration);
+                org.apache.commons.io.FileUtils.copyFileToDirectory(configFile, targetConfiguration);
             }
         } catch (IOException ioe) {
-            throw new IllegalStateException("Cannot copy configuration file " + appServer.getConfigFile() + " to configuration folder " + targetConfiguration);
+            throw new IllegalStateException("Cannot copy configuration file " + appServer.getConfigFile() + " to configuration folder " + targetConfiguration, ioe);
         }
     }
 

@@ -16,6 +16,7 @@
     <version.jboss.logging>3.3.2.Final</version.jboss.logging>
     <version.junit>5.3.2</version.junit>
     <version.junit.pioneer>0.3.0</version.junit.pioneer>
+    <version.wildfly.cli>7.0.0.Final</version.wildfly.cli>
     <version.zt.exec>1.10</version.zt.exec>
   </properties>
 
@@ -35,6 +36,11 @@
         <groupId>org.zeroturnaround</groupId>
         <artifactId>zt-exec</artifactId>
         <version>${version.zt.exec}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.wildfly.core</groupId>
+        <artifactId>wildfly-cli</artifactId>
+        <version>${version.wildfly.cli}</version>
       </dependency>
       <dependency>
         <groupId>org.junit.jupiter</groupId>
