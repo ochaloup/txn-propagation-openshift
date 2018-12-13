@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,6 +22,10 @@ public final class FileUtils {
     private static final Logger log = Logger.getLogger(FileUtils.class);
     private FileUtils() {}
 
+
+    public static File getDirectory(String filePath) {
+        return getDirectory(new StringExtended(filePath));
+    }
 
     public static File getDirectory(StringExtended filePath) {
         File potentialDir = getIfExists(filePath.getNonEmpty());
@@ -83,6 +89,44 @@ public final class FileUtils {
         return new File(String.join(File.separator, paths));
     }
 
+    /**
+     * Searching for file (you could provide filename in form of file URL - it means file:/...)
+     * 1. as absolute path
+     * 2. as resource of class loader
+     * 3. at {@link ProjectProperties#JAR_LIBRARY} path
+     */
+    public static File searchForFile(final String fileName) {
+        // Consult absolute path
+        File file = new File(fileName);
+
+        // Working with URLs inside of try block
+        try {
+            // if url then convert to file
+            if(!file.exists() && fileName.startsWith("file:")) {
+                URL url = new URL(fileName);
+                file = urlToFile(url);
+            }
+            // load as resource of class loader
+            if(!file.exists()) {
+                URL url = ClassLoader.getSystemClassLoader().getResource(file.getPath());
+                if(url != null) {
+                    file = urlToFile(url);
+                }
+            }
+            // try to load from jar library path
+            if(!file.exists()) {
+                file = new File(EnvVariables.get(EnvVariables.BASE_DIR_PARAM), file.getPath());
+            }
+            // not able to find file neither at classloader path nor library path -> exception
+            if(!file.exists()) {
+                throw new IllegalStateException("Can't find file '" + fileName + "'");
+            }
+        } catch (MalformedURLException mue) {
+            throw new RuntimeException(mue);
+        }
+        return file;
+    }
+
     public static void unzip(File fileToUnzip, File targetPath) {
         try {
             ZipFile zipFile = new ZipFile(fileToUnzip);
@@ -121,6 +165,10 @@ public final class FileUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static File urlToFile(final URL url) {
+        return new File(url.getFile());
     }
 
     private static String adjustFileLocation(final String fileLocation) {

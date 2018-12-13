@@ -21,17 +21,18 @@ import io.narayana.test.utils.StringUtils;
     Configuration configuration = ConfigurationProvider.createConfiguration(context);
  */
 public final class PropertiesProvider {
-    public static final Configuration DEFAULT = ConfigurationProvider.getConfiguration();
+    public static final PropertiesProvider DEFAULT = new PropertiesProvider(ConfigurationProvider.getConfiguration());
     private final Configuration cfg;
 
-    // -- jboss generic stuff
+    // -- standalone
     // source directory of jboss/wfly distribution
     private static final String JBOSS_HOME_PARAM = "jboss.home";
     private static final String JBOSS_DIST_PARAM = "jboss.dist";
-
-    // -- standalone
     // directory where jboss will "copied" and started from
-    private static final String JBOSS_TARGET_PATH = "standalone.jboss.target.path";
+    private static final String JBOSS_TARGET_PATH_PARAM = "jboss.target.path";
+    private static final String JBOSS_CONFIG = "jboss.config";
+    private static final String JBOSS_PORT_OFFSET = "jboss.port.offset";
+    private static final String JBOSS_CLI_PORT = "jboss.cli.port";
 
     public PropertiesProvider(Configuration cfg) {
         this.cfg = cfg;
@@ -58,16 +59,36 @@ public final class PropertiesProvider {
      * jboss.dist.eap1 -> jboss.home.eap1 -> jboss.dist -> jboss.home
      * </code>
      */
-    public final File jbossSourceHome(String suffix) {
-        return getDirectory(suffix, JBOSS_DIST_PARAM, JBOSS_HOME_PARAM);
+    public final File jbossSourceHome(String eapName) {
+        return getDirectory(eapName, JBOSS_DIST_PARAM, JBOSS_HOME_PARAM);
     }
 
     /**
      * Directory where jboss data will be loaded to and where the jboss will be started from,
-     * defined by property {@value #JBOSS_TARGET_PATH}.
+     * defined by property {@value #JBOSS_TARGET_PATH_PARAM}.
      */
-    public final File standaloneJbossTargetDir(String suffix) {
-        return getOrCreateDirectory(suffix, JBOSS_TARGET_PATH);
+    public final File jbossTargetDir(String eapName) {
+        StringExtended targetDir = takeFirstDefinedSuffixed(eapName, JBOSS_TARGET_PATH_PARAM);
+        if(targetDir.isEmpty()) {
+            return FileUtils.getDirectory("target");
+        }
+        return getOrCreateDirectory(eapName, JBOSS_TARGET_PATH_PARAM);
+    }
+
+    public final String jbossConfig(String eapName, String defaultValue) {
+        StringExtended string = takeFirstDefinedSuffixed(eapName, JBOSS_CONFIG);
+        if(string.isEmpty()) return defaultValue;
+        return string.get();
+    }
+    public final int jbossPortOffset(String eapName, int defaultValue) {
+        StringExtended string = takeFirstDefinedSuffixed(eapName, JBOSS_PORT_OFFSET);
+        if(string.isEmpty()) return defaultValue;
+        return new Integer(string.get());
+    }
+    public final int jbossCliPort(String eapName, int defaultValue) {
+        StringExtended string = takeFirstDefinedSuffixed(eapName, JBOSS_CLI_PORT);
+        if(string.isEmpty()) return defaultValue;
+        return new Integer(string.get());
     }
 
     private StringExtended takeFirstDefinedSuffixed(String suffix, String... items) {

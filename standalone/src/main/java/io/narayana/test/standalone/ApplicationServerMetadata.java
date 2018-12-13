@@ -8,7 +8,7 @@ public final class ApplicationServerMetadata {
                  jbossHome; // where jboss is placed to and started from
     private String configFileDefinition; // standalone.xml or /tmp/standalone-full.xml or ...
     private String configFile; // config which is passed during server startup, it means only name like 'standalone.xml' (not path!)
-    private int portOffset;
+    private int portOffset, cliPort;
     private File configurationDir, dataDir, tmpDir, logDir, contentDir;
 
     private ApplicationServerMetadata() {}
@@ -62,6 +62,13 @@ public final class ApplicationServerMetadata {
     }
     public ApplicationServerMetadata setPortOffset(int portOffset) {
         this.portOffset = portOffset;
+        return this;
+    }
+    public int getCliPort() {
+        return cliPort;
+    }
+    public ApplicationServerMetadata setCliPort(int cliPort) {
+        this.cliPort = cliPort;
         return this;
     }
 
