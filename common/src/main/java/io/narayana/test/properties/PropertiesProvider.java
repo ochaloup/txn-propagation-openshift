@@ -24,13 +24,12 @@ public final class PropertiesProvider {
     public static final Configuration DEFAULT = ConfigurationProvider.getConfiguration();
     private final Configuration cfg;
 
-    // temporary directory
-    private static final String TMP_DIR_PARAM = "java.io.tmpdir";
+    // -- jboss generic stuff
     // source directory of jboss/wfly distribution
     private static final String JBOSS_HOME_PARAM = "jboss.home";
     private static final String JBOSS_DIST_PARAM = "jboss.dist";
 
-    // STANDALONE
+    // -- standalone
     // directory where jboss will "copied" and started from
     private static final String JBOSS_TARGET_PATH = "standalone.jboss.target.path";
 
@@ -39,10 +38,11 @@ public final class PropertiesProvider {
     }
 
     /**
-     * Temporary dir where data can be loaded to which is defined by property {@value #TMP_DIR_PARAM}.
+     * Temporary dir where data can be loaded to which is defined by property
+     * {@value EnvVariables#TMP_DIR_PARAM}.
      */
     public final File tmpDir() {
-        StringExtended tmpDirString = new StringExtended(cfg.get(TMP_DIR_PARAM));
+        StringExtended tmpDirString = new StringExtended(EnvVariables.TMP_DIR_PARAM);
         return FileUtils.getDirectory(tmpDirString);
     }
 

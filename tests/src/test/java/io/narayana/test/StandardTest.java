@@ -38,7 +38,7 @@ public class StandardTest {
         File jbossSource = properties.jbossSourceHome(eap1);
         File jbossTarget = properties.standaloneJbossTargetDir(eap1);
         ApplicationServerPreparation appServer1 = new ApplicationServerPreparation(eap1, properties);
-        appServer1.prepareWildFlyServer(jbossSource, jbossTarget, "standalone.xml", 0);
+        appServer1.prepareWildFlyServer(jbossSource, jbossTarget);
         appServer1.runJBoss();
     }
 }

@@ -14,19 +14,21 @@ import java.util.zip.ZipFile;
 
 import org.jboss.logging.Logger;
 
+import io.narayana.test.properties.EnvVariables;
+
 public final class FileUtils {
     private static final Logger log = Logger.getLogger(FileUtils.class);
     private FileUtils() {}
 
 
     public static File getDirectory(StringExtended filePath) {
-        File potentialDir = get(filePath.getNonEmpty());
+        File potentialDir = getIfExists(filePath.getNonEmpty());
         if(!potentialDir.isDirectory()) throw new IllegalStateException("File '" + potentialDir + "' is not a directory");
         return potentialDir;
     }
 
     public static File getOrCreateDirectory(StringExtended filePath) {
-        File potentialDir = get(filePath.getNonEmpty());
+        File potentialDir = getIfExists(filePath.getNonEmpty());
         if(potentialDir.exists() && potentialDir.isFile())
             throw new IllegalStateException("File '" + potentialDir + "' exists as a regural file but it's expected to be a directory");
         if(!potentialDir.exists()) potentialDir.mkdirs();
@@ -38,6 +40,14 @@ public final class FileUtils {
     }
 
     public static File get(String filePath) {
+        return new File(adjustFileLocation(filePath));
+    }
+
+    public static File getIfExists(StringExtended filePath) {
+        return getIfExists(filePath.getNonEmpty());
+    }
+
+    public static File getIfExists(String filePath) {
         File file = new File(adjustFileLocation(filePath));
         if(!file.exists()) {
             throw new IllegalStateException("File '" + filePath + "' does not exists even when adjusted to '" + file.getPath() + "'");
@@ -113,12 +123,12 @@ public final class FileUtils {
         }
     }
 
-    public static String adjustFileLocation(final String fileLocation) {
-        String normalizedFileName = fileLocation.trim().replaceFirst("^~",System.getProperty("user.home"));
-        if(System.getProperty("basedir") != null) {
-            if(!normalizedFileName.startsWith("/")) {
-                normalizedFileName = System.getProperty("basedir") + "/" + normalizedFileName;
-            }
+    private static String adjustFileLocation(final String fileLocation) {
+        String normalizedFileName = fileLocation.trim().replaceFirst(
+                "^~", EnvVariables.getE(EnvVariables.HOME_DIR_PARAM).getNonEmpty());
+        if(!normalizedFileName.startsWith(Character.toString(File.separatorChar))
+                && EnvVariables.getE(EnvVariables.BASE_DIR_PARAM).isNotEmpty()) {
+            normalizedFileName = EnvVariables.get(EnvVariables.BASE_DIR_PARAM) + File.separatorChar + normalizedFileName;
         }
         return normalizedFileName;
     }

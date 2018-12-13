@@ -34,6 +34,14 @@ public final class StringExtended {
         return content;
     }
 
+    public boolean isEmpty() {
+        return StringUtils.isEmpty(get());
+    }
+
+    public boolean isNotEmpty() {
+        return !isEmpty();
+    }
+
     @Override
     public String toString() {
         return get();

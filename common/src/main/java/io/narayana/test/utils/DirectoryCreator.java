@@ -10,9 +10,13 @@ public final class DirectoryCreator {
     }
 
     public DirectoryCreator create(String... subpath) {
-        if (subpath == null || subpath.length == 0)
-            return this;
-        FileUtils.createDirectory(this.basePath, subpath);
+        createSingle(subpath);
         return this;
+    }
+
+    public File createSingle(String... subpath) {
+        if (subpath == null || subpath.length == 0)
+            throw new IllegalStateException("No data for creation directory was provided");
+        return FileUtils.createDirectory(this.basePath, subpath);
     }
 }

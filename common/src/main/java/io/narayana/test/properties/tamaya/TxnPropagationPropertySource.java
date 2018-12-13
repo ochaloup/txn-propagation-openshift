@@ -48,7 +48,7 @@ public class TxnPropagationPropertySource extends BasePropertySource {
             return new HashMap<>();
         }
 
-        File propertyFileLocationAdjusted = FileUtils.get(propertyFileLocation);
+        File propertyFileLocationAdjusted = FileUtils.getIfExists(propertyFileLocation);
 
         try(FileInputStream inputStream = new FileInputStream(propertyFileLocationAdjusted)) {
             Properties props = new Properties();

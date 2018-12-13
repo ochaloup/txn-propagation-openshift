@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import org.zeroturnaround.exec.ProcessExecutor;
 
 import io.narayana.test.properties.PropertiesProvider;
+import io.narayana.test.utils.DirectoryCreator;
 import io.narayana.test.utils.FileUtils;
 
 public class ApplicationServerPreparation {
@@ -18,10 +19,14 @@ public class ApplicationServerPreparation {
         this.properties = properties;
     }
 
+    public void prepareWildFlyServer(File jbossOriginalHome, File jbossTarget) {
+        prepareWildFlyServer(jbossOriginalHome, jbossTarget, "standalone.xml", 0);
+    }
+
     public void prepareWildFlyServer(File jbossOriginalHome, File jbossTarget, String configFile, int portOffset) {
         appServer
             .setJbossOriginHome(jbossOriginalHome)
-            .setConfigFile(configFile)
+            .setConfigFileDefinition(configFile)
             .setJbossHome(jbossTarget)
             .setPortOffset(portOffset);
 
@@ -29,11 +34,13 @@ public class ApplicationServerPreparation {
     }
 
     private void prepareJBossHome() {
+        // loading the original jboss location and target location that is constructed here and which is used for jboss start
         File jbossSource = appServer.getJbossOriginHome();
         File jbossTarget = appServer.getJbossHome();
 
         // clean the target directory
         org.apache.commons.io.FileUtils.deleteQuietly(jbossTarget);
+
         // check if the source is zip then we need to unzip first
         try {
             String type = Files.probeContentType(jbossSource.toPath());
@@ -45,40 +52,41 @@ public class ApplicationServerPreparation {
                 appServer.setJbossOriginHome(jbossSource);
             }
         } catch (IOException ioe) {
-            throw new IllegalStateException("Cannot find out content type of base jboss location at '" + jbossSource + "'", ioe);
+            throw new IllegalStateException("Cannot find content type of base jboss location at '" + jbossSource + "'", ioe);
         }
 
-        FileUtils.createMultipleDirectories(jbossTarget)
-            .create("standalone", "configuration")
-            .create("standalone", "data")
-            .create("standalone", "tmp")
-            .create("standalone", "log")
-            .create("standalone", "content");
+        DirectoryCreator creator = FileUtils.createMultipleDirectories(jbossTarget);
+        appServer.setConfigurationDir(creator.createSingle("standalone", "configuration"));
+        appServer.setDataDir(creator.createSingle("standalone", "data"));
+        appServer.setTmpDir(creator.createSingle("standalone", "tmp"));
+        appServer.setLogDir(creator.createSingle("standalone", "log"));
+        appServer.setContentDir(creator.createSingle("standalone", "content"));
 
-        File targetConfiguration = FileUtils.toFile(jbossTarget, "standalone", "configuration");
         try {
             org.apache.commons.io.FileUtils.copyDirectory(
-                    FileUtils.toFile(jbossSource, "standalone", "configuration"), targetConfiguration,
+                    FileUtils.toFile(jbossSource, "standalone", "configuration"), appServer.getConfigurationDir(),
                     (filename) -> filename.getName().matches(".*\\.properties"));
         } catch (IOException ioe) {
             throw new IllegalStateException("Cannot copy properties file from " + FileUtils.toFile(jbossSource, "standalone", "configuration")
-              + " to " + FileUtils.toFile(jbossTarget, "standalone", "configuration"));
+              + " to " + appServer.getConfigurationDir());
         }
 
         // prepare configuration file to go
         try {
-            File configFileAbs = new File(FileUtils.adjustFileLocation(appServer.getConfigFile()));
-            if(configFileAbs.exists()) {
-                org.apache.commons.io.FileUtils.copyFile(configFileAbs, targetConfiguration);
-                appServer.setConfigFile(configFileAbs.getName());
+            File configFile = FileUtils.get(appServer.getConfigFileDefinition());
+            if(configFile.exists()) { // config file exists then use it as absolute path to go
+                org.apache.commons.io.FileUtils.copyFile(configFile, appServer.getConfigurationDir());
             } else {
-                File configFile = FileUtils.toFile(jbossSource, "standalone", "configuration", appServer.getConfigFile());
-                if(!configFile.isFile()) throw new IllegalStateException("Cannot use non-existent config file '" + appServer.getConfigFile()
-                    + "'" + " at '" + configFile + "'");
-                org.apache.commons.io.FileUtils.copyFileToDirectory(configFile, targetConfiguration);
+                // trying to find the config file as string which is in the configuration directory of the source jboss home
+                configFile = FileUtils.toFile(jbossSource, "standalone", "configuration", appServer.getConfigFileDefinition());
+                if(!configFile.isFile()) throw new IllegalStateException("Cannot use non-existent config file '" + appServer.getConfigFileDefinition()
+                    + "'" + " '" + configFile + "' used from at source jboss home '" + jbossSource + "'");
+                org.apache.commons.io.FileUtils.copyFileToDirectory(configFile, appServer.getConfigurationDir());
             }
+            appServer.setConfigFile(configFile.getName()); // name of config file used during server startup
         } catch (IOException ioe) {
-            throw new IllegalStateException("Cannot copy configuration file " + appServer.getConfigFile() + " to configuration folder " + targetConfiguration, ioe);
+            throw new IllegalStateException("Cannot copy configuration file " + appServer.getConfigFile() + " to configuration folder "
+                    + appServer.getConfigurationDir(), ioe);
         }
     }
 
