@@ -33,7 +33,7 @@ public class StandardTest {
         new ZipExporterImpl(archive).exportTo(new File(archive.getName()), true);
 
         final String eap1 = "eap1";
-        ApplicationServer appServer1 = new ApplicationServer(eap1, PropertiesProvider.DEFAULT);
+        ApplicationServer appServer1 = new ApplicationServer(eap1);
         appServer1.prepare();
         appServer1.start();
     }

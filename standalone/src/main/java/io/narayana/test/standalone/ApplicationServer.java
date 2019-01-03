@@ -20,6 +20,10 @@ public class ApplicationServer {
 
     private static final int DEFAULT_CLI_PORT = 9990;
 
+    public ApplicationServer(String serverName) {
+        this(serverName, PropertiesProvider.DEFAULT);
+    }
+
     public ApplicationServer(String serverName, PropertiesProvider properties) {
         appServer = ApplicationServerMetadata.instance().setName(serverName);
         appServer
