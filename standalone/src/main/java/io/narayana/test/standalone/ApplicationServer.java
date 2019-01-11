@@ -15,30 +15,25 @@ import io.narayana.test.utils.DirectoryCreator;
 import io.narayana.test.utils.FileUtils;
 
 public class ApplicationServer {
-    private final ApplicationServerMetadata appServer;
-    private PropertiesProvider properties;
+    private final ApplicationServerMetadata metadata;
+    private PropertiesProvider conf = PropertiesProvider.INSTANCE;
 
     private static final int DEFAULT_CLI_PORT = 9990;
 
     public ApplicationServer(String serverName) {
-        this(serverName, PropertiesProvider.DEFAULT);
+        metadata = ApplicationServerMetadata.instance().setName(serverName);
+        metadata
+            .setJbossHome(conf.jbossTargetDir(serverName))
+            .setJbossOriginHome(conf.jbossSourceHome(serverName))
+            .setConfigFileDefinition(conf.jbossConfig(serverName, "standalone.xml"))
+            .setPortOffset(conf.jbossPortOffset(serverName, 0))
+            .setCliPort(conf.jbossCliPort(serverName, DEFAULT_CLI_PORT + metadata.getPortOffset()));
     }
 
-    public ApplicationServer(String serverName, PropertiesProvider properties) {
-        appServer = ApplicationServerMetadata.instance().setName(serverName);
-        appServer
-            .setJbossHome(properties.jbossTargetDir(serverName))
-            .setJbossOriginHome(properties.jbossSourceHome(serverName))
-            .setConfigFileDefinition(properties.jbossConfig(serverName, "standalone.xml"))
-            .setPortOffset(properties.jbossPortOffset(serverName, 0))
-            .setCliPort(properties.jbossCliPort(serverName, DEFAULT_CLI_PORT + appServer.getPortOffset()));
-        this.properties = properties;
-    }
-
-    public void prepare() {
+    public ApplicationServer prepare() {
         // loading the original jboss location and target location that is constructed here and which is used for jboss start
-        File jbossSource = appServer.getJbossOriginHome();
-        File jbossTarget = appServer.getJbossHome();
+        File jbossSource = metadata.getJbossOriginHome();
+        File jbossTarget = metadata.getJbossHome();
 
         // clean the target directory
         org.apache.commons.io.FileUtils.deleteQuietly(jbossTarget);
@@ -47,68 +42,70 @@ public class ApplicationServer {
         try {
             String type = Files.probeContentType(jbossSource.toPath());
             if(type.contains("zip")) {
-                File unzipLocation = new File(properties.tmpDir(), appServer.getName());
+                File unzipLocation = new File(conf.tmpDir(), metadata.getName());
                 org.apache.commons.io.FileUtils.deleteDirectory(unzipLocation);
                 FileUtils.unzip(jbossSource, unzipLocation);
                 jbossSource = unzipLocation;
-                appServer.setJbossOriginHome(jbossSource);
+                metadata.setJbossOriginHome(jbossSource);
             }
         } catch (IOException ioe) {
             throw new IllegalStateException("Cannot find content type of base jboss location at '" + jbossSource + "'", ioe);
         }
 
         DirectoryCreator creator = FileUtils.createMultipleDirectories(jbossTarget);
-        appServer.setConfigurationDir(creator.createSingle("standalone", "configuration"));
-        appServer.setDataDir(creator.createSingle("standalone", "data"));
-        appServer.setTmpDir(creator.createSingle("standalone", "tmp"));
-        appServer.setLogDir(creator.createSingle("standalone", "log"));
-        appServer.setContentDir(creator.createSingle("standalone", "content"));
+        metadata.setConfigurationDir(creator.createSingle("standalone", "configuration"));
+        metadata.setDataDir(creator.createSingle("standalone", "data"));
+        metadata.setTmpDir(creator.createSingle("standalone", "tmp"));
+        metadata.setLogDir(creator.createSingle("standalone", "log"));
+        metadata.setContentDir(creator.createSingle("standalone", "content"));
 
         try {
             org.apache.commons.io.FileUtils.copyDirectory(
-                    FileUtils.toFile(jbossSource, "standalone", "configuration"), appServer.getConfigurationDir(),
+                    FileUtils.toFile(jbossSource, "standalone", "configuration"), metadata.getConfigurationDir(),
                     (filename) -> filename.getName().matches(".*\\.properties"));
         } catch (IOException ioe) {
             throw new IllegalStateException("Cannot copy properties file from " + FileUtils.toFile(jbossSource, "standalone", "configuration")
-              + " to " + appServer.getConfigurationDir());
+              + " to " + metadata.getConfigurationDir());
         }
 
         // prepare configuration file to go
         try {
-            File configFile = FileUtils.toFile(jbossSource, "standalone", "configuration", appServer.getConfigFileDefinition());
+            File configFile = FileUtils.toFile(jbossSource, "standalone", "configuration", metadata.getConfigFileDefinition());
             if(configFile.exists()) { // searching for config file at the JBOSS_HOME/standalone/configuration
-                org.apache.commons.io.FileUtils.copyFile(configFile, appServer.getConfigurationDir());
+                org.apache.commons.io.FileUtils.copyFileToDirectory(configFile, metadata.getConfigurationDir());
             } else { // trying to find config file as absolute path definition
-                configFile = FileUtils.searchForFile(appServer.getConfigFileDefinition());
-                org.apache.commons.io.FileUtils.copyFile(configFile, appServer.getConfigurationDir());
+                configFile = FileUtils.searchForFile(metadata.getConfigFileDefinition());
+                org.apache.commons.io.FileUtils.copyFileToDirectory(configFile, metadata.getConfigurationDir());
             }
-            appServer.setConfigFile(configFile.getName()); // name of config file used during server startup
+            metadata.setConfigFile(configFile.getName()); // name of config file used during server startup
         } catch (IOException ioe) {
-            throw new IllegalStateException("Cannot copy configuration file " + appServer.getConfigFile() + " to configuration folder "
-                    + appServer.getConfigurationDir(), ioe);
+            throw new IllegalStateException("Cannot copy configuration file " + metadata.getConfigFile() + " to configuration folder "
+                    + metadata.getConfigurationDir(), ioe);
         } catch (Exception e) {
-            throw new IllegalStateException("Cannot use non-existent config file '" + appServer.getConfigFileDefinition()
+            throw new IllegalStateException("Cannot use non-existent config file '" + metadata.getConfigFileDefinition()
                 + "' for further start of the jboss from '" + jbossSource + "'", e);
         }
+        return this;
     }
 
-    public void start() {
-        start();
+    public ApplicationServer start() {
+        return start(new String[] {});
     }
 
-    public void start(String... additionalParams) {
+    public ApplicationServer start(String... additionalParams) {
         try {
-            String script = FileUtils.toFile(appServer.getJbossOriginHome(), "bin", getCommand("standalone")).getPath();
-            String[] params = new String[]{script, "-c", appServer.getConfigFile(),
-                    "-Djboss.socket.binding.port-offset=" + appServer.getPortOffset(),
-                    "-Djboss.server.data.dir=" + appServer.getDataDir().getPath(),
-                    "-Djboss.server.log.dir=" + appServer.getLogDir().getPath(),
-                    "-Djboss.server.deploy.dir=" + appServer.getContentDir().getPath(),
-                    "-Djboss.server.config.dir=" + appServer.getConfigurationDir().getPath()};
+            String script = FileUtils.toFile(metadata.getJbossOriginHome(), "bin", getCommand("standalone")).getPath();
+            String[] params = new String[]{script, "-c", metadata.getConfigFile(),
+                    "-Djboss.socket.binding.port-offset=" + metadata.getPortOffset(),
+                    "-Djboss.server.data.dir=" + metadata.getDataDir().getPath(),
+                    "-Djboss.server.log.dir=" + metadata.getLogDir().getPath(),
+                    "-Djboss.server.deploy.dir=" + metadata.getContentDir().getPath(),
+                    "-Djboss.server.config.dir=" + metadata.getConfigurationDir().getPath()};
             new ProcessExecutor().command(ArrayUtils.addAll(params, additionalParams)).execute();
         } catch (Exception te) {
-            throw new RuntimeException("Cannot start app server " + appServer.getJbossHome());
+            throw new RuntimeException("Cannot start app server " + metadata.getJbossHome());
         }
+        return this;
     }
 
     public boolean isStarted() {
@@ -134,8 +131,8 @@ public class ApplicationServer {
     // "$JBOSS_BIN"/bin/jboss-cli.sh -c --controller=localhost:$PORT --command=":read-attribute(name=server-state)" | grep -s running
     public String cli(String cliCommand) {
         try {
-            String script = FileUtils.toFile(appServer.getJbossOriginHome(), "bin", getCommand("jboss-cli")).getPath();
-            return new ProcessExecutor().command(script, "-c", "--controller=localhost:" + appServer.getCliPort(),
+            String script = FileUtils.toFile(metadata.getJbossOriginHome(), "bin", getCommand("jboss-cli")).getPath();
+            return new ProcessExecutor().command(script, "-c", "--controller=localhost:" + metadata.getCliPort(),
                     String.format("--commands=%s", cliCommand))
                     .readOutput(true).execute().outputUTF8();
         } catch (Exception e) {

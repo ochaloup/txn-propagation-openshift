@@ -21,7 +21,7 @@ import io.narayana.test.utils.StringUtils;
     Configuration configuration = ConfigurationProvider.createConfiguration(context);
  */
 public final class PropertiesProvider {
-    public static final PropertiesProvider DEFAULT = new PropertiesProvider(ConfigurationProvider.getConfiguration());
+    public static final PropertiesProvider INSTANCE = new PropertiesProvider();
     private final Configuration cfg;
 
     // -- standalone
@@ -34,8 +34,9 @@ public final class PropertiesProvider {
     private static final String JBOSS_PORT_OFFSET = "jboss.port.offset";
     private static final String JBOSS_CLI_PORT = "jboss.cli.port";
 
-    public PropertiesProvider(Configuration cfg) {
-        this.cfg = cfg;
+    private PropertiesProvider() {
+        // use INSTANCE
+        this.cfg = ConfigurationProvider.getConfiguration();
     }
 
     /**

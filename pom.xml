@@ -10,6 +10,7 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
+    <version.assertj>3.11.1</version.assertj>
     <version.commons.io>2.6</version.commons.io>
     <version.commons.lang3>3.8.1</version.commons.lang3>
     <version.checkstyle.plugin>3.0.0</version.checkstyle.plugin>
@@ -54,6 +55,12 @@
         <version>${version.junit.pioneer}</version>
         <scope>test</scope>
       </dependency>
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>${version.assertj}</version>
+        <scope>test</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -85,6 +92,12 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <!-- needed for JUnit to work, the surefire 2.x does support out of the box -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.0.0-M3</version>
       </plugin>
     </plugins>
   </build>

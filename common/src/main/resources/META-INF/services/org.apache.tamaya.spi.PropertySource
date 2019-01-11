@@ -1,2 +1,3 @@
 io.narayana.test.properties.tamaya.EnvironmentPropertySourceLowercase
 io.narayana.test.properties.tamaya.TxnPropagationPropertySource
+io.narayana.test.properties.tamaya.TestConfig

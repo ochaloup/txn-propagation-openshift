@@ -2,6 +2,7 @@ package io.narayana.test.utils;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -164,6 +165,16 @@ public final class FileUtils {
             zipFile.close();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public static void writeFile(File file, String content) {
+        try (FileWriter writer = new FileWriter(file, false) ){
+            writer.write(content);
+        } catch (IOException ioe) {
+            String contentPart = content.substring(0, 20);
+            if(!contentPart.equals(content)) contentPart += "...";
+            throw new IllegalStateException("Can't write to file '" + file + "' of content: " + contentPart, ioe);
         }
     }
 
