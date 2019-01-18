@@ -12,6 +12,7 @@
 
   <properties>
     <version.tamaya>0.3-incubating</version.tamaya>
+    <version.wildfly>15.0.1.Final</version.wildfly>
   </properties>
 
   <dependencies>
@@ -49,4 +50,70 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <profile>
+        <id>download-wildfly-distro</id>
+        <activation>
+            <property>
+                <name>!no.wildfly.download</name>
+            </property>
+        </activation>
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>download-and-unpack-wildfly</id>
+                            <phase>generate-test-resources</phase>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                            <configuration>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>org.wildfly</groupId>
+                                        <artifactId>wildfly-servlet-dist</artifactId>
+                                        <version>${version.wildfly}</version>
+                                        <type>zip</type>
+                                        <overWrite>true</overWrite>
+                                    </artifactItem>
+                                </artifactItems>
+                                <outputDirectory>${project.build.directory}</outputDirectory>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>rename-unpacked-wildfly</id>
+                            <phase>process-test-resources</phase>
+                            <goals>
+                                <goal>run</goal>
+                            </goals>
+                            <configuration>
+                                <verbose>true</verbose>
+                                <target>
+                                    <echo message="Hello, world"/>
+                                    <mkdir dir="${project.build.directory}/jboss-as" />
+                                    <!-- <move todir="${project.build.directory}/jboss-as">
+                                        <fileset dir="${project.build.directory}">
+                                            <include name="wildfly*/**/*" />
+                                        </fileset>
+                                        <cutdirsmapper dirs="1" />
+                                    </move> -->
+                                </target>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>
+  </profiles>
 </project>

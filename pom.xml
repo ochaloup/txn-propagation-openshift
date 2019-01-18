@@ -17,6 +17,7 @@
     <version.jboss.logging>3.3.2.Final</version.jboss.logging>
     <version.junit>5.3.2</version.junit>
     <version.junit.pioneer>0.3.0</version.junit.pioneer>
+    <version.mvn.plugin.antrun>1.8</version.mvn.plugin.antrun>
     <version.wildfly.cli>7.0.0.Final</version.wildfly.cli>
     <version.zt.exec>1.10</version.zt.exec>
   </properties>
@@ -73,6 +74,15 @@
   </dependencies>
 
   <build>
+    <pluginManagement> <!-- plugin dependency management -->
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>${version.mvn.plugin.antrun}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
