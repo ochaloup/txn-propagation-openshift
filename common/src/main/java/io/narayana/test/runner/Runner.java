@@ -9,31 +9,46 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class Runner {
-    private AtomicReference<ExecutorService> defaultThreadPool;
-    private final Map<String, ExecutorService> threadPools = new HashMap<>();
+public final class Runner {
+    private static AtomicReference<ExecutorService> defaultThreadPool;
+    private static final Map<String, ExecutorService> threadPools = new HashMap<>();
 
-    public void run(Runnable task) {
+    private Runner() {
+        // utility class
+    }
+
+    public static void run(Runnable task) {
         getDefaultThreadPool().submit(task);
     }
 
-    public void runAt(Runnable task, String threadPoolName) {
+    public static void runAt(Runnable task, String threadPoolName) {
         getThreadPool(threadPoolName).submit(task);
     }
 
-    public <V> Future<V> runAndGet(Callable<V> task) {
+    public static <V> Future<V> runAndGet(Callable<V> task) {
         return getDefaultThreadPool().submit(task);
+    }
+
+    public static <V> Future<V> runAndGetAt(Callable<V> task, String threadPoolName) {
+        return getThreadPool(threadPoolName).submit(task);
     }
 
     /**
      * Waiting forever to finish all threads in thread pool.
      */
-    public void awaitTermination(String threadPoolName) {
-        awaitTermination(threadPoolName, Long.MAX_VALUE);
+    public static void awaitTermination(String threadPoolName) {
+        awaitTermination(getThreadPool(threadPoolName), Long.MAX_VALUE);
     }
 
-    public void awaitTermination(String threadPoolName, long timeoutSeconds) {
-        ExecutorService threadPool = getThreadPool(threadPoolName);
+    public static void awaitTermination() {
+        awaitTermination(getDefaultThreadPool(), Long.MAX_VALUE);
+    }
+
+    public static void awaitTermination(long timeoutSeconds) {
+        awaitTermination(getDefaultThreadPool(), timeoutSeconds);
+    }
+
+    public static void awaitTermination(ExecutorService threadPool, long timeoutSeconds) {
         threadPool.shutdown();
         try {
             if (!threadPool.awaitTermination(timeoutSeconds, TimeUnit.SECONDS)) {
@@ -46,14 +61,14 @@ public class Runner {
         }
     }
 
-    private ExecutorService getDefaultThreadPool() {
+    private static ExecutorService getDefaultThreadPool() {
         if(defaultThreadPool == null) {
             defaultThreadPool.compareAndSet(null, Executors.newCachedThreadPool());
         }
         return defaultThreadPool.get();
     }
 
-    private ExecutorService getThreadPool(String threadPoolName) {
+    private static ExecutorService getThreadPool(String threadPoolName) {
         synchronized(threadPools) {
             if(!threadPools.containsKey(threadPoolName)) {
                 threadPools.put(threadPoolName, Executors.newCachedThreadPool());

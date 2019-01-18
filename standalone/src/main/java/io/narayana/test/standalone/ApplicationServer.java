@@ -3,18 +3,22 @@ package io.narayana.test.standalone;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.jboss.logging.Logger;
 import org.zeroturnaround.exec.ProcessExecutor;
 
 import io.narayana.test.properties.PropertiesProvider;
+import io.narayana.test.runner.Runner;
 import io.narayana.test.utils.DirectoryCreator;
 import io.narayana.test.utils.FileUtils;
 
 public class ApplicationServer {
+    private static final Logger log = Logger.getLogger(ApplicationServer.class);
     private final ApplicationServerMetadata metadata;
     private PropertiesProvider conf = PropertiesProvider.INSTANCE;
 
@@ -92,18 +96,17 @@ public class ApplicationServer {
         return start(new String[] {});
     }
 
-    public ApplicationServer start(String... additionalParams) {
-        try {
-            String script = FileUtils.toFile(metadata.getJbossOriginHome(), "bin", getCommand("standalone")).getPath();
-            String[] params = new String[]{script, "-c", metadata.getConfigFile(),
-                    "-Djboss.socket.binding.port-offset=" + metadata.getPortOffset(),
-                    "-Djboss.server.data.dir=" + metadata.getDataDir().getPath(),
-                    "-Djboss.server.log.dir=" + metadata.getLogDir().getPath(),
-                    "-Djboss.server.deploy.dir=" + metadata.getContentDir().getPath(),
-                    "-Djboss.server.config.dir=" + metadata.getConfigurationDir().getPath()};
-            new ProcessExecutor().command(ArrayUtils.addAll(params, additionalParams)).execute();
-        } catch (Exception te) {
-            throw new RuntimeException("Cannot start app server " + metadata.getJbossHome());
+    public ApplicationServer start(final String... additionalParams) {
+        Runner.run(() -> executeStart(additionalParams));
+        while(!isStarted()) {
+            System.out.println("Waiting for server to start...");
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ie) {
+                // TODO: stop container probably
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Sleeping for app server startup interrupted");
+            }
         }
         return this;
     }
@@ -137,6 +140,26 @@ public class ApplicationServer {
                     .readOutput(true).execute().outputUTF8();
         } catch (Exception e) {
             throw new RuntimeException("Cannot run jboss cli command '" + cliCommand + "'");
+        }
+    }
+
+
+    private void executeStart(String... additionalParams) {
+        String script = FileUtils.toFile(metadata.getJbossOriginHome(), "bin", getCommand("standalone")).getPath();
+        String[] params = new String[]{script, "-c", metadata.getConfigFile(),
+                "-Djboss.socket.binding.port-offset=" + metadata.getPortOffset(),
+                "-Djboss.server.data.dir=" + metadata.getDataDir().getPath(),
+                "-Djboss.server.log.dir=" + metadata.getLogDir().getPath(),
+                "-Djboss.server.deploy.dir=" + metadata.getContentDir().getPath(),
+                "-Djboss.server.config.dir=" + metadata.getConfigurationDir().getPath()};
+        String[] allParams = ArrayUtils.addAll(params, additionalParams);
+        log.debugf("starting server with command: '%s'", Arrays.asList(allParams));
+
+        try {
+            new ProcessExecutor().command(allParams).execute();
+        } catch (Exception te) {
+            throw new RuntimeException("Cannot start app server " + metadata.getJbossHome()
+                + " with command: '" + Arrays.asList(allParams) + "'");
         }
     }
 

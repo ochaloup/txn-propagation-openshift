@@ -13,6 +13,9 @@
   <properties>
     <version.tamaya>0.3-incubating</version.tamaya>
     <version.wildfly>15.0.1.Final</version.wildfly>
+
+    <!-- source for wildfly dist for tests -->
+    <jboss.home.test>${env.JBOSS_HOME}</jboss.home.test>
   </properties>
 
   <dependencies>
@@ -51,69 +54,86 @@
     </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <!-- maven surefire plugin for exporting tibco config parameters to environment variables, so deployed TIBCOObjectFactory can use it -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables combine.children="append">
+            <jboss.home.test>${jboss.home.test}</jboss.home.test>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <profiles>
     <profile>
-        <id>download-wildfly-distro</id>
-        <activation>
-            <property>
-                <name>!no.wildfly.download</name>
-            </property>
-        </activation>
-        <build>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <executions>
-                        <execution>
-                            <id>download-and-unpack-wildfly</id>
-                            <phase>generate-test-resources</phase>
-                            <goals>
-                                <goal>unpack</goal>
-                            </goals>
-                            <configuration>
-                                <artifactItems>
-                                    <artifactItem>
-                                        <groupId>org.wildfly</groupId>
-                                        <artifactId>wildfly-servlet-dist</artifactId>
-                                        <version>${version.wildfly}</version>
-                                        <type>zip</type>
-                                        <overWrite>true</overWrite>
-                                    </artifactItem>
-                                </artifactItems>
-                                <outputDirectory>${project.build.directory}</outputDirectory>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-antrun-plugin</artifactId>
-                    <executions>
-                        <execution>
-                            <id>rename-unpacked-wildfly</id>
-                            <phase>process-test-resources</phase>
-                            <goals>
-                                <goal>run</goal>
-                            </goals>
-                            <configuration>
-                                <verbose>true</verbose>
-                                <target>
-                                    <echo message="Hello, world"/>
-                                    <mkdir dir="${project.build.directory}/jboss-as" />
-                                    <!-- <move todir="${project.build.directory}/jboss-as">
-                                        <fileset dir="${project.build.directory}">
-                                            <include name="wildfly*/**/*" />
-                                        </fileset>
-                                        <cutdirsmapper dirs="1" />
-                                    </move> -->
-                                </target>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-            </plugins>
-        </build>
+    <id>download-wildfly-distro</id>
+    <activation>
+      <property>
+        <name>!no.wildfly.download</name>
+      </property>
+    </activation>
+    <properties>
+      <jboss.home.test>${project.build.directory}/wildfly</jboss.home.test>
+    </properties>
+    <build>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>download-and-unpack-wildfly</id>
+              <phase>generate-test-resources</phase>
+              <goals>
+                <goal>unpack</goal>
+              </goals>
+              <configuration>
+                <artifactItems>
+                  <artifactItem>
+                    <groupId>org.wildfly</groupId>
+                    <artifactId>wildfly-servlet-dist</artifactId>
+                    <version>${version.wildfly}</version>
+                    <type>zip</type>
+                    <overWrite>true</overWrite>
+                  </artifactItem>
+                </artifactItems>
+                <outputDirectory>${project.build.directory}</outputDirectory>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>rename-unpacked-wildfly</id>
+              <phase>process-test-resources</phase>
+              <goals>
+                <goal>run</goal>
+              </goals>
+              <configuration>
+                <verbose>true</verbose>
+                <target>
+                  <delete dir="${project.build.directory}/wildfly" />
+                  <move todir="${project.build.directory}/wildfly">
+                    <fileset dir="${project.build.directory}">
+                      <include name="wildfly*/**/*" />
+                    </fileset>
+                    <cutdirsmapper dirs="1" />
+                  </move>
+                </target>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </build>
     </profile>
   </profiles>
 </project>

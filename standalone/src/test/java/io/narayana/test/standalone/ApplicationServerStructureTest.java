@@ -16,7 +16,7 @@ import io.narayana.test.properties.tamaya.TestConfig;
 import io.narayana.test.utils.FileUtils;
 
 @ExtendWith(TempDirectory.class)
-public class ApplicationServerTest {
+public class ApplicationServerStructureTest {
     private static final String CONFIG_CONTENT =
             "<?xml version='1.0' encoding='UTF-8'?><server xmlns=\"urn:jboss:domain:10.0\"></server>";
 
