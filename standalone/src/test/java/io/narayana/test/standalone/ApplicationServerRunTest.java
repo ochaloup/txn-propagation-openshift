@@ -15,7 +15,9 @@ import io.narayana.test.properties.tamaya.TestConfig;
 
 @ExtendWith(TempDirectory.class)
 public class ApplicationServerRunTest {
-    private static final String JBOSS_HOME_TEST = System.getProperty("jboss.home.test");
+    private static final String JBOSS_HOME_TEST_PARAM = "jboss.home.test";
+    private static final String JBOSS_HOME_TEST_VALUE
+        = System.getProperty(JBOSS_HOME_TEST_PARAM);
     private Path targetDir = null;
 
     @BeforeEach
@@ -23,7 +25,11 @@ public class ApplicationServerRunTest {
         targetDir = tempDir.resolve("target");
         targetDir.toFile().mkdirs();
 
-        TestConfig.put("jboss.home", JBOSS_HOME_TEST);
+        assertThat(JBOSS_HOME_TEST_VALUE)
+            .as("Parameter '" + JBOSS_HOME_TEST_PARAM + "' with definition of the jboss home directory "
+                    + "for test is empty. Maybe the maven profile downloading the WFLY was not activated.")
+            .isNotNull();
+        TestConfig.put("jboss.home", JBOSS_HOME_TEST_VALUE);
         TestConfig.put("jboss.target.path", targetDir.toFile().getAbsolutePath());
     }
 
@@ -37,7 +43,7 @@ public class ApplicationServerRunTest {
         ApplicationServer appServer = new ApplicationServer("default").prepare();
         appServer.start();
         assertThat(appServer.isStarted())
-            .as("Application server with home directory '%s' should be started.", JBOSS_HOME_TEST)
+            .as("Application server with home directory '%s' should be started.", JBOSS_HOME_TEST_VALUE)
             .isTrue();
     }
 }

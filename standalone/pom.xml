@@ -74,7 +74,7 @@
     <id>download-wildfly-distro</id>
     <activation>
       <property>
-        <name>!no.wildfly.download</name>
+        <name>!no.download</name>
       </property>
     </activation>
     <properties>

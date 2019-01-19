@@ -2,8 +2,10 @@ package io.narayana.test.standalone;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,6 +24,7 @@ public class ApplicationServer {
     private final ApplicationServerMetadata metadata;
     private PropertiesProvider conf = PropertiesProvider.INSTANCE;
 
+    private static final long DEFAULT_STARTUP_TIMEOUT_S = 30;
     private static final int DEFAULT_CLI_PORT = 9990;
 
     public ApplicationServer(String serverName) {
@@ -93,26 +96,58 @@ public class ApplicationServer {
     }
 
     public ApplicationServer start() {
-        return start(new String[] {});
+        return start(DEFAULT_STARTUP_TIMEOUT_S, new String[] {});
+    }
+
+    public ApplicationServer start(int timeoutSeconds) {
+        return start(timeoutSeconds, new String[] {});
     }
 
     public ApplicationServer start(final String... additionalParams) {
-        Runner.run(() -> executeStart(additionalParams));
-        while(!isStarted()) {
+        return start(DEFAULT_STARTUP_TIMEOUT_S, additionalParams);
+    }
+
+    public ApplicationServer start(long timeoutSeconds, final String... additionalParams) {
+        Runner.run(() -> this.executeStart(additionalParams));
+
+        long startTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+        long currentTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+        while(!isStarted() && (currentTimeSeconds - startTimeSeconds) > timeoutSeconds) {
+            currentTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+            log.debugf("Waiting for container startup for %s seconds", currentTimeSeconds - startTimeSeconds);
             System.out.println("Waiting for server to start...");
             try {
-                Thread.sleep(500);
+                Thread.sleep(200);
             } catch (InterruptedException ie) {
                 // TODO: stop container probably
                 Thread.currentThread().interrupt();
                 throw new RuntimeException("Sleeping for app server startup interrupted");
             }
         }
+        if(!isStarted()) {
+            throw new IllegalStateException(String.format("Cannot start server %s in time of %s seconds",
+                    this, timeoutSeconds));
+        }
+        return this;
+    }
+
+    public ApplicationServer stop(long timeoutSeconds) {
+        try {
+            cli(":shutdown");
+        } catch (ConnectException ce) {
+            throw new IllegalStateException("Cannot connect to server " + this + " to invoke shutdown");
+        }
         return this;
     }
 
     public boolean isStarted() {
-        String out = cli(":read-attribute(name=server-state)");
+        String out = null;
+        try {
+            out = cli(":read-attribute(name=server-state)");
+        } catch (ConnectException ce) {
+            return false;
+        }
+
         Pattern patternOutcome = Pattern.compile("\"outcome\" => \"(.+?)\"");
         Matcher matcherOutcome = patternOutcome.matcher(out);
 
@@ -132,12 +167,18 @@ public class ApplicationServer {
     }
 
     // "$JBOSS_BIN"/bin/jboss-cli.sh -c --controller=localhost:$PORT --command=":read-attribute(name=server-state)" | grep -s running
-    public String cli(String cliCommand) {
+    public String cli(String cliCommand) throws ConnectException{
+        String host = "localhost";
         try {
             String script = FileUtils.toFile(metadata.getJbossOriginHome(), "bin", getCommand("jboss-cli")).getPath();
-            return new ProcessExecutor().command(script, "-c", "--controller=localhost:" + metadata.getCliPort(),
+            String out = new ProcessExecutor().command(script, "-c", "--controller=" + host + ":" + metadata.getCliPort(),
                     String.format("--commands=%s", cliCommand))
                     .readOutput(true).execute().outputUTF8();
+            if(out.contains("Connection refused") || out.contains("WFLYPRT0053")) {
+                throw new ConnectException(String.format("Cannot connect to controller at %s:%s with command '%s'",
+                        host, metadata.getCliPort(), cliCommand));
+            }
+            return out;
         } catch (Exception e) {
             throw new RuntimeException("Cannot run jboss cli command '" + cliCommand + "'");
         }

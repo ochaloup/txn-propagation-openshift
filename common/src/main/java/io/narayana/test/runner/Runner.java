@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class Runner {
-    private static AtomicReference<ExecutorService> defaultThreadPool;
+    private static AtomicReference<ExecutorService> defaultThreadPool = new AtomicReference<>();
     private static final Map<String, ExecutorService> threadPools = new HashMap<>();
 
     private Runner() {
@@ -62,10 +62,14 @@ public final class Runner {
     }
 
     private static ExecutorService getDefaultThreadPool() {
-        if(defaultThreadPool == null) {
-            defaultThreadPool.compareAndSet(null, Executors.newCachedThreadPool());
+        ExecutorService threadPoolNow = defaultThreadPool.get();
+        if(threadPoolNow == null) {
+            threadPoolNow = Executors.newCachedThreadPool();
+            if(!defaultThreadPool.compareAndSet(null, threadPoolNow)) {
+                return defaultThreadPool.get();
+            }
         }
-        return defaultThreadPool.get();
+        return threadPoolNow;
     }
 
     private static ExecutorService getThreadPool(String threadPoolName) {
